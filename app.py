@@ -103,42 +103,13 @@ if view_option == "Daily Forecast":
                 tide_data, current_data, ferry_data, weather_data
             )
             
-            # Create columns for different data displays
-            col1, col2 = st.columns(2)
-            
-            # Top recommendations 
-            with col1:
-                st.subheader("Top Launch Windows")
-                if recommendations:
-                    optimal_windows = [r for r in recommendations if r['rating'] == 'optimal']
-                    if optimal_windows:
-                        for window in optimal_windows[:3]:  # Show top 3 optimal windows
-                            st.markdown(f"""
-                            <div style="padding: 10px; border-radius: 5px; background-color: rgba(46, 204, 113, 0.1); margin-bottom: 10px;">
-                                <h4 style="margin:0; color: {OPTIMAL_COLOR};">🚣 {window['start_time']} - {window['end_time']}</h4>
-                                <p style="margin:0;">Tide: {window['tide_height']}ft | Current: {window['current_speed']} mph<br>
-                                Wind: {window['wind_speed']} mph {window['wind_direction']} | Ferry: {window['ferry_status']}</p>
-                            </div>
-                            """, unsafe_allow_html=True)
-                    else:
-                        acceptable_windows = [r for r in recommendations if r['rating'] == 'acceptable']
-                        if acceptable_windows:
-                            st.info("No optimal launch windows available today. Consider these acceptable alternatives:")
-                            for window in acceptable_windows[:3]:
-                                st.markdown(f"""
-                                <div style="padding: 10px; border-radius: 5px; background-color: rgba(241, 196, 15, 0.1); margin-bottom: 10px;">
-                                    <h4 style="margin:0; color: {ACCEPTABLE_COLOR};">🚣 {window['start_time']} - {window['end_time']}</h4>
-                                    <p style="margin:0;">Tide: {window['tide_height']}ft | Current: {window['current_speed']} mph<br>
-                                    Wind: {window['wind_speed']} mph {window['wind_direction']} | Ferry: {window['ferry_status']}</p>
-                                </div>
-                                """, unsafe_allow_html=True)
-                        else:
-                            st.error("No suitable launch windows available today. Consider another day.")
-                else:
-                    st.error("Could not generate recommendations with the available data.")
+            # SIMPLIFIED VIEW: Start with clean display of ideal launch times
+            if recommendations:
+                # Get the optimal launch windows
+                optimal_windows = [r for r in recommendations if r['rating'] == 'optimal']
+                acceptable_windows = [r for r in recommendations if r['rating'] == 'acceptable']
                 
                 # Current conditions
-                st.subheader("Current Conditions")
                 current_hour = datetime.now().hour
                 current_conditions = None
                 
@@ -148,6 +119,7 @@ if view_option == "Daily Forecast":
                         current_conditions = r
                         break
                 
+                # Show current status first
                 if current_conditions:
                     rating_color = {
                         'optimal': OPTIMAL_COLOR,
@@ -155,104 +127,176 @@ if view_option == "Daily Forecast":
                         'not_recommended': NOT_RECOMMENDED_COLOR
                     }[current_conditions['rating']]
                     
+                    status_text = "OPTIMAL TIME TO LAUNCH! 🚣" if current_conditions['rating'] == 'optimal' else \
+                                "ACCEPTABLE TO LAUNCH" if current_conditions['rating'] == 'acceptable' else \
+                                "NOT RECOMMENDED FOR LAUNCH"
+                    
                     st.markdown(f"""
-                    <div style="padding: 15px; border-radius: 5px; background-color: rgba(52, 152, 219, 0.1);">
-                        <h4 style="margin:0; color: {rating_color};">Current Status: {current_conditions['rating'].title()}</h4>
-                        <p style="margin:0;">
-                            <strong>Tide:</strong> {current_conditions['tide_height']}ft ({current_conditions['tide_status']})<br>
-                            <strong>Current:</strong> {current_conditions['current_speed']} mph ({current_conditions['current_direction']})<br>
-                            <strong>Wind:</strong> {current_conditions['wind_speed']} mph from {current_conditions['wind_direction']}<br>
-                            <strong>Next Ferry:</strong> {current_conditions['ferry_status']}
+                    <div style="padding: 20px; border-radius: 10px; background-color: {rating_color}; margin: 20px 0; text-align: center;">
+                        <h2 style="margin:0; color: white;">{status_text}</h2>
+                        <p style="margin:5px 0 0 0; color: white; font-size: 18px;">
+                            Current Time: {datetime.now().strftime('%H:%M')}
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
-                else:
-                    st.info("Current conditions data not available")
-            
-            # Visualizations
-            with col2:
-                # Create tide chart
-                st.subheader("Tide Forecast")
-                if tide_data is not None and len(tide_data) > 0:
-                    fig = px.line(
-                        tide_data, 
-                        x='time', 
-                        y='height', 
-                        title="Tide Heights (ft)",
-                        labels={"time": "Time", "height": "Height (ft)"}
-                    )
-                    
-                    # Add high tide danger zone
-                    high_tide_threshold = 10.0  # Assuming beach disappears around 10ft tide
-                    fig.add_shape(
-                        type="rect",
-                        x0=tide_data['time'].min(),
-                        x1=tide_data['time'].max(),
-                        y0=high_tide_threshold,
-                        y1=max(tide_data['height'].max() + 1, high_tide_threshold + 2),
-                        fillcolor="rgba(255, 0, 0, 0.2)",
-                        line=dict(width=0),
-                        layer="below"
-                    )
-                    fig.add_annotation(
-                        x=tide_data['time'].iloc[len(tide_data)//2],
-                        y=high_tide_threshold + 0.5,
-                        text="Beach Access Limited",
-                        showarrow=False,
-                        font=dict(color="red")
-                    )
-                    
-                    # Improve appearance
-                    fig.update_layout(
-                        height=300,
-                        margin=dict(l=20, r=20, t=40, b=20)
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-                else:
-                    st.error("Tide data not available")
                 
-                # Create current speed chart
-                st.subheader("Current Speed")
-                if current_data is not None and len(current_data) > 0:
-                    fig = px.line(
-                        current_data, 
-                        x='time', 
-                        y='speed', 
-                        title="Current Speed (mph)",
-                        labels={"time": "Time", "speed": "Speed (mph)"}
-                    )
-                    
-                    # Add danger zone for strong currents
-                    strong_current_threshold = 2.3  # mph (2.0 knots converted to mph)
-                    fig.add_shape(
-                        type="rect",
-                        x0=current_data['time'].min(),
-                        x1=current_data['time'].max(),
-                        y0=strong_current_threshold,
-                        y1=max(current_data['speed'].max() + 0.5, strong_current_threshold + 1),
-                        fillcolor="rgba(255, 0, 0, 0.2)",
-                        line=dict(width=0),
-                        layer="below"
-                    )
-                    fig.add_annotation(
-                        x=current_data['time'].iloc[len(current_data)//2],
-                        y=strong_current_threshold + 0.25,
-                        text="Strong Current",
-                        showarrow=False,
-                        font=dict(color="red")
-                    )
-                    
-                    # Improve appearance
-                    fig.update_layout(
-                        height=300,
-                        margin=dict(l=20, r=20, t=40, b=20)
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
+                # Display optimal windows prominently
+                st.subheader("Today's Optimal Launch Windows")
+                if optimal_windows:
+                    # Create a more visually prominent display of optimal times
+                    cols = st.columns(min(3, len(optimal_windows)))
+                    for i, window in enumerate(optimal_windows[:3]):
+                        with cols[i]:
+                            st.markdown(f"""
+                            <div style="padding: 15px; border-radius: 10px; background-color: {OPTIMAL_COLOR}; text-align: center;">
+                                <h3 style="margin:0; color: white;">{window['start_time']} - {window['end_time']}</h3>
+                            </div>
+                            """, unsafe_allow_html=True)
                 else:
-                    st.error("Current data not available")
+                    st.info("No optimal launch windows available today.")
+                    if acceptable_windows:
+                        st.subheader("Best Alternatives")
+                        cols = st.columns(min(3, len(acceptable_windows)))
+                        for i, window in enumerate(acceptable_windows[:3]):
+                            with cols[i]:
+                                st.markdown(f"""
+                                <div style="padding: 15px; border-radius: 10px; background-color: {ACCEPTABLE_COLOR}; text-align: center;">
+                                    <h3 style="margin:0; color: white;">{window['start_time']} - {window['end_time']}</h3>
+                                </div>
+                                """, unsafe_allow_html=True)
+                    else:
+                        st.error("No suitable launch windows available today. Consider another day.")
+            else:
+                st.error("Could not generate recommendations with the available data.")
+            
+            # Add expander for detailed information
+            with st.expander("View Detailed Environmental Conditions"):
+                # Create columns for different data displays
+                col1, col2 = st.columns(2)
+                
+                # Current details
+                with col1:
+                    if current_conditions:
+                        st.subheader("Current Conditions")
+                        st.markdown(f"""
+                        <div style="padding: 15px; border-radius: 5px; background-color: rgba(52, 152, 219, 0.1);">
+                            <h4 style="margin:0; color: {rating_color};">Status: {current_conditions['rating'].title()}</h4>
+                            <p style="margin:0;">
+                                <strong>Tide:</strong> {current_conditions['tide_height']}ft ({current_conditions['tide_status']})<br>
+                                <strong>Current:</strong> {current_conditions['current_speed']} mph ({current_conditions['current_direction']})<br>
+                                <strong>Wind:</strong> {current_conditions['wind_speed']} mph from {current_conditions['wind_direction']}<br>
+                                <strong>Next Ferry:</strong> {current_conditions['ferry_status']}
+                            </p>
+                        </div>
+                        """, unsafe_allow_html=True)
+                    else:
+                        st.info("Current conditions data not available")
+                    
+                    # Top recommendations 
+                    st.subheader("Top Launch Windows")
+                    if optimal_windows:
+                        for window in optimal_windows[:3]:  # Show top 3 optimal windows
+                            st.markdown(f"""
+                            <div style="padding: 10px; border-radius: 5px; background-color: rgba(46, 204, 113, 0.1); margin-bottom: 10px;">
+                                <h4 style="margin:0; color: {OPTIMAL_COLOR};">🚣 {window['start_time']} - {window['end_time']}</h4>
+                                <p style="margin:0;">Tide: {window['tide_height']}ft | Current: {window['current_speed']} mph<br>
+                                Wind: {window['wind_speed']} mph {window['wind_direction']} | Ferry: {window['ferry_status']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                    elif acceptable_windows:
+                        for window in acceptable_windows[:3]:
+                            st.markdown(f"""
+                            <div style="padding: 10px; border-radius: 5px; background-color: rgba(241, 196, 15, 0.1); margin-bottom: 10px;">
+                                <h4 style="margin:0; color: {ACCEPTABLE_COLOR};">🚣 {window['start_time']} - {window['end_time']}</h4>
+                                <p style="margin:0;">Tide: {window['tide_height']}ft | Current: {window['current_speed']} mph<br>
+                                Wind: {window['wind_speed']} mph {window['wind_direction']} | Ferry: {window['ferry_status']}</p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                
+                # Visualizations
+                with col2:
+                    # Create tide chart
+                    st.subheader("Tide Forecast")
+                    if tide_data is not None and len(tide_data) > 0:
+                        fig = px.line(
+                            tide_data, 
+                            x='time', 
+                            y='height', 
+                            title="Tide Heights (ft)",
+                            labels={"time": "Time", "height": "Height (ft)"}
+                        )
+                        
+                        # Add high tide danger zone
+                        high_tide_threshold = 10.0  # Assuming beach disappears around 10ft tide
+                        fig.add_shape(
+                            type="rect",
+                            x0=tide_data['time'].min(),
+                            x1=tide_data['time'].max(),
+                            y0=high_tide_threshold,
+                            y1=max(tide_data['height'].max() + 1, high_tide_threshold + 2),
+                            fillcolor="rgba(255, 0, 0, 0.2)",
+                            line=dict(width=0),
+                            layer="below"
+                        )
+                        fig.add_annotation(
+                            x=tide_data['time'].iloc[len(tide_data)//2],
+                            y=high_tide_threshold + 0.5,
+                            text="Beach Access Limited",
+                            showarrow=False,
+                            font=dict(color="red")
+                        )
+                        
+                        # Improve appearance
+                        fig.update_layout(
+                            height=300,
+                            margin=dict(l=20, r=20, t=40, b=20)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.error("Tide data not available")
+                    
+                    # Create current chart
+                    st.subheader("Current Forecast")
+                    if current_data is not None and len(current_data) > 0:
+                        fig = px.line(
+                            current_data, 
+                            x='time', 
+                            y='speed', 
+                            title="Current Speed (mph)",
+                            labels={"time": "Time", "speed": "Speed (mph)"}
+                        )
+                        
+                        # Add danger zone for strong currents
+                        strong_current_threshold = 2.3  # mph (2.0 knots converted to mph)
+                        fig.add_shape(
+                            type="rect",
+                            x0=current_data['time'].min(),
+                            x1=current_data['time'].max(),
+                            y0=strong_current_threshold,
+                            y1=max(current_data['speed'].max() + 0.5, strong_current_threshold + 1),
+                            fillcolor="rgba(255, 0, 0, 0.2)",
+                            line=dict(width=0),
+                            layer="below"
+                        )
+                        fig.add_annotation(
+                            x=current_data['time'].iloc[len(current_data)//2],
+                            y=strong_current_threshold + 0.25,
+                            text="Strong Current",
+                            showarrow=False,
+                            font=dict(color="red")
+                        )
+                        
+                        # Improve appearance
+                        fig.update_layout(
+                            height=300,
+                            margin=dict(l=20, r=20, t=40, b=20)
+                        )
+                        st.plotly_chart(fig, use_container_width=True)
+                    else:
+                        st.error("Current data not available")
             
             # Display hourly forecast in a table
-            st.subheader("Hourly Forecast")
+            st.subheader("All Hours Forecast")
             if recommendations:
                 # Create summary hourly table
                 hours = []
