@@ -40,12 +40,42 @@ with st.sidebar:
     
     # Date selection
     today = get_pacific_time().date()
-    selected_date = st.date_input(
-        "Select date",
-        today,
-        min_value=today,
-        max_value=today + timedelta(days=7)
-    )
+    
+    # Custom date selector with US format
+    st.markdown("**Select date**")
+    month = st.selectbox("Month", 
+                        options=range(1, 13),
+                        format_func=lambda x: f"{x:02d}",
+                        index=today.month-1,
+                        key="month_select")
+    
+    day = st.selectbox("Day", 
+                      options=range(1, 32),
+                      format_func=lambda x: f"{x:02d}",
+                      index=today.day-1,
+                      key="day_select")
+    
+    year = st.selectbox("Year", 
+                       options=[today.year, today.year + 1],
+                       index=0,
+                       key="year_select")
+    
+    # Create date object from selections
+    try:
+        selected_date = datetime(year, month, day).date()
+        # Ensure selected date is not before today
+        if selected_date < today:
+            selected_date = today
+        # Ensure selected date is not more than 7 days in the future
+        max_date = today + timedelta(days=7)
+        if selected_date > max_date:
+            selected_date = max_date
+        
+        st.markdown(f"**Selected: {format_date(selected_date)}**")
+    except ValueError:
+        # Handle invalid dates like Feb 31
+        st.warning("Invalid date selection. Using today's date.")
+        selected_date = today
     
     # View options
     view_option = st.radio(
