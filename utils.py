@@ -1,17 +1,27 @@
 import pandas as pd
 from datetime import datetime, timedelta
+import pytz
+
+def get_pacific_time():
+    """Get current time in Pacific timezone"""
+    pacific = pytz.timezone('US/Pacific')
+    return datetime.now(pytz.utc).astimezone(pacific)
 
 def format_time(dt_obj):
     """Format datetime object to 24-hour military time string (HH:MM)"""
     if isinstance(dt_obj, datetime):
+        # If timezone aware, convert to Pacific time first
+        if dt_obj.tzinfo is not None:
+            pacific = pytz.timezone('US/Pacific')
+            dt_obj = dt_obj.astimezone(pacific)
         return dt_obj.strftime("%H:%M")
     return dt_obj
 
 def format_date(date_obj):
-    """Format date object to string (Day, Month Date)"""
+    """Format date object to US style string (MM/DD/YYYY)"""
     if isinstance(date_obj, datetime):
         date_obj = date_obj.date()
-    return date_obj.strftime("%a, %b %d")
+    return date_obj.strftime("%m/%d/%Y")
 
 def get_date_range(selected_date, view_option):
     """

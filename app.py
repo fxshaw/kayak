@@ -4,7 +4,8 @@ import plotly.express as px
 import plotly.graph_objects as go
 from datetime import datetime, timedelta
 import time
-from utils import format_time, format_date, get_date_range
+import pytz
+from utils import format_time, format_date, get_date_range, get_pacific_time
 from api_clients import (
     get_tide_data, 
     get_current_data, 
@@ -38,7 +39,7 @@ with st.sidebar:
     st.header("Settings")
     
     # Date selection
-    today = datetime.now().date()
+    today = get_pacific_time().date()
     selected_date = st.date_input(
         "Select date",
         today,
@@ -110,7 +111,7 @@ if view_option == "Daily Forecast":
                 acceptable_windows = [r for r in recommendations if r['rating'] == 'acceptable']
                 
                 # Current conditions
-                current_hour = datetime.now().hour
+                current_hour = get_pacific_time().hour
                 current_conditions = None
                 
                 for r in recommendations:
@@ -135,7 +136,7 @@ if view_option == "Daily Forecast":
                     <div style="padding: 20px; border-radius: 10px; background-color: {rating_color}; margin: 20px 0; text-align: center;">
                         <h2 style="margin:0; color: white;">{status_text}</h2>
                         <p style="margin:5px 0 0 0; color: white; font-size: 18px;">
-                            Current Time: {datetime.now().strftime('%H:%M')}
+                            Current Time: {get_pacific_time().strftime('%H:%M')}
                         </p>
                     </div>
                     """, unsafe_allow_html=True)
@@ -699,4 +700,4 @@ else:  # Weekly Overview
 
 # Add footer
 st.markdown("---")
-st.caption("Kayak Launch Assistant • Data refreshed: " + datetime.now().strftime("%Y-%m-%d %H:%M"))
+st.caption("Kayak Launch Assistant • Data refreshed: " + get_pacific_time().strftime("%m/%d/%Y %H:%M"))
