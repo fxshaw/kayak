@@ -19,7 +19,7 @@ from recommendation_engine import (
     ACCEPTABLE_COLOR,
     NOT_RECOMMENDED_COLOR
 )
-from webcam_client import get_point_white_area_webcams
+from marine_info import get_marine_weather_text, get_tide_information, get_marine_observations
 
 # Configure page
 st.set_page_config(
@@ -388,18 +388,114 @@ if view_option == "Daily Forecast":
             st.info("Please try refreshing the page or selecting a different date.")
             
         # Add webcam section
-        st.header("📷 Live Webcam Views")
-        with st.spinner("Loading webcam images..."):
-            webcams = get_point_white_area_webcams()
-            if webcams:
-                st.markdown("View current conditions at locations around Bainbridge Island and Puget Sound")
-                tabs = st.tabs(list(webcams.keys()))
-                for i, (name, data) in enumerate(webcams.items()):
-                    with tabs[i]:
-                        st.image(data["image"], caption=f"{data['description']} (Updated: {data['updated']})")
-                        st.markdown(f"*{data['description']}*")
-            else:
-                st.info("Webcam images are not available at this time. Please try again later.")
+        st.header("🌊 Marine & Weather Information")
+        with st.spinner("Loading marine information..."):
+            # Get marine weather, tide information, and marine observations
+            marine_weather = get_marine_weather_text()
+            tide_info = get_tide_information()
+            marine_obs = get_marine_observations()
+            
+            # Create tabs for different types of information
+            tabs = st.tabs(["Marine Forecast", "Tide Information", "Live Observations"])
+            
+            # Marine Forecast tab
+            with tabs[0]:
+                if marine_weather.get("status") == "success":
+                    # Display any warnings first
+                    if marine_weather.get("warnings"):
+                        for warning in marine_weather.get("warnings"):
+                            if "SMALL CRAFT ADVISORY" in warning:
+                                st.warning(warning)
+                            elif "GALE WARNING" in warning:
+                                st.error(warning)
+                            else:
+                                st.info(warning)
+                    
+                    # Display marine forecast sections
+                    sections = marine_weather.get("sections", {})
+                    
+                    # Tonight and tomorrow forecasts
+                    col1, col2 = st.columns(2)
+                    with col1:
+                        if "tonight" in sections:
+                            st.subheader("Tonight")
+                            st.markdown(sections["tonight"])
+                    
+                    with col2:
+                        if "tomorrow" in sections:
+                            st.subheader("Tomorrow")
+                            st.markdown(sections["tomorrow"])
+                    
+                    # Other conditions
+                    if "conditions" in sections:
+                        st.subheader("Marine Conditions")
+                        st.markdown(sections["conditions"])
+                    
+                    st.caption(f"Updated: {marine_weather.get('updated')}")
+                else:
+                    st.info("Marine forecast information is not available at this time.")
+                    if marine_weather.get("error"):
+                        st.caption(f"Error: {marine_weather.get('error')}")
+            
+            # Tide Information tab
+            with tabs[1]:
+                if tide_info.get("status") == "success":
+                    st.subheader(f"Tide Information for {tide_info.get('station')}")
+                    
+                    # Display relevant tide information
+                    tide_text = tide_info.get("data", "")
+                    
+                    # Extract and display the most relevant parts
+                    lines = tide_text.split('\n')
+                    relevant_lines = []
+                    for line in lines:
+                        if "high tide" in line.lower() or "low tide" in line.lower() or "feet" in line.lower():
+                            relevant_lines.append(line)
+                    
+                    if relevant_lines:
+                        for line in relevant_lines[:10]:  # Show only first 10 relevant lines
+                            st.markdown(f"• {line}")
+                    else:
+                        st.markdown(tide_text)
+                    
+                    st.caption(f"Updated: {tide_info.get('updated')}")
+                else:
+                    st.info("Tide information is not available at this time.")
+                    if tide_info.get("error"):
+                        st.caption(f"Error: {tide_info.get('error')}")
+            
+            # Marine Observations tab
+            with tabs[2]:
+                if marine_obs.get("status") == "success":
+                    st.subheader(f"Current Conditions at {marine_obs.get('station')}")
+                    
+                    observations = marine_obs.get("observations", {})
+                    if observations:
+                        col1, col2 = st.columns(2)
+                        
+                        with col1:
+                            if "wind_speed" in observations:
+                                st.metric("Wind Speed", observations["wind_speed"])
+                            if "wind_direction" in observations:
+                                st.metric("Wind Direction", observations["wind_direction"])
+                            if "pressure" in observations:
+                                st.metric("Pressure", observations["pressure"])
+                        
+                        with col2:
+                            if "wave_height" in observations:
+                                st.metric("Wave Height", observations["wave_height"])
+                            if "air_temp" in observations:
+                                st.metric("Air Temperature", observations["air_temp"])
+                            if "water_temp" in observations:
+                                st.metric("Water Temperature", observations["water_temp"])
+                    else:
+                        st.info("No observation data available.")
+                    
+                    st.caption(f"Updated: {marine_obs.get('updated')}")
+                else:
+                    st.info("Marine observation data is not available at this time.")
+                    if marine_obs.get("error"):
+                        st.caption(f"Error: {marine_obs.get('error')}")
 
 else:  # Weekly Overview
     st.header("Weekly Kayak Launch Overview")
@@ -774,19 +870,115 @@ else:  # Weekly Overview
             st.error(f"Error loading weekly data: {str(e)}")
             st.info("Please try refreshing the page or selecting a different date range.")
     
-    # Add webcam section to weekly view
-    st.header("📷 Live Webcam Views")
-    with st.spinner("Loading webcam images..."):
-        webcams = get_point_white_area_webcams()
-        if webcams:
-            st.markdown("View current conditions at locations around Bainbridge Island and Puget Sound")
-            tabs = st.tabs(list(webcams.keys()))
-            for i, (name, data) in enumerate(webcams.items()):
-                with tabs[i]:
-                    st.image(data["image"], caption=f"{data['description']} (Updated: {data['updated']})")
-                    st.markdown(f"*{data['description']}*")
-        else:
-            st.info("Webcam images are not available at this time. Please try again later.")
+    # Add marine information section to weekly view
+    st.header("🌊 Marine & Weather Information")
+    with st.spinner("Loading marine information..."):
+        # Get marine weather, tide information, and marine observations
+        marine_weather = get_marine_weather_text()
+        tide_info = get_tide_information()
+        marine_obs = get_marine_observations()
+        
+        # Create tabs for different types of information
+        tabs = st.tabs(["Marine Forecast", "Tide Information", "Live Observations"])
+        
+        # Marine Forecast tab
+        with tabs[0]:
+            if marine_weather.get("status") == "success":
+                # Display any warnings first
+                if marine_weather.get("warnings"):
+                    for warning in marine_weather.get("warnings"):
+                        if "SMALL CRAFT ADVISORY" in warning:
+                            st.warning(warning)
+                        elif "GALE WARNING" in warning:
+                            st.error(warning)
+                        else:
+                            st.info(warning)
+                
+                # Display marine forecast sections
+                sections = marine_weather.get("sections", {})
+                
+                # Tonight and tomorrow forecasts
+                col1, col2 = st.columns(2)
+                with col1:
+                    if "tonight" in sections:
+                        st.subheader("Tonight")
+                        st.markdown(sections["tonight"])
+                
+                with col2:
+                    if "tomorrow" in sections:
+                        st.subheader("Tomorrow")
+                        st.markdown(sections["tomorrow"])
+                
+                # Other conditions
+                if "conditions" in sections:
+                    st.subheader("Marine Conditions")
+                    st.markdown(sections["conditions"])
+                
+                st.caption(f"Updated: {marine_weather.get('updated')}")
+            else:
+                st.info("Marine forecast information is not available at this time.")
+                if marine_weather.get("error"):
+                    st.caption(f"Error: {marine_weather.get('error')}")
+        
+        # Tide Information tab
+        with tabs[1]:
+            if tide_info.get("status") == "success":
+                st.subheader(f"Tide Information for {tide_info.get('station')}")
+                
+                # Display relevant tide information
+                tide_text = tide_info.get("data", "")
+                
+                # Extract and display the most relevant parts
+                lines = tide_text.split('\n')
+                relevant_lines = []
+                for line in lines:
+                    if "high tide" in line.lower() or "low tide" in line.lower() or "feet" in line.lower():
+                        relevant_lines.append(line)
+                
+                if relevant_lines:
+                    for line in relevant_lines[:10]:  # Show only first 10 relevant lines
+                        st.markdown(f"• {line}")
+                else:
+                    st.markdown(tide_text)
+                
+                st.caption(f"Updated: {tide_info.get('updated')}")
+            else:
+                st.info("Tide information is not available at this time.")
+                if tide_info.get("error"):
+                    st.caption(f"Error: {tide_info.get('error')}")
+        
+        # Marine Observations tab
+        with tabs[2]:
+            if marine_obs.get("status") == "success":
+                st.subheader(f"Current Conditions at {marine_obs.get('station')}")
+                
+                observations = marine_obs.get("observations", {})
+                if observations:
+                    col1, col2 = st.columns(2)
+                    
+                    with col1:
+                        if "wind_speed" in observations:
+                            st.metric("Wind Speed", observations["wind_speed"])
+                        if "wind_direction" in observations:
+                            st.metric("Wind Direction", observations["wind_direction"])
+                        if "pressure" in observations:
+                            st.metric("Pressure", observations["pressure"])
+                    
+                    with col2:
+                        if "wave_height" in observations:
+                            st.metric("Wave Height", observations["wave_height"])
+                        if "air_temp" in observations:
+                            st.metric("Air Temperature", observations["air_temp"])
+                        if "water_temp" in observations:
+                            st.metric("Water Temperature", observations["water_temp"])
+                else:
+                    st.info("No observation data available.")
+                
+                st.caption(f"Updated: {marine_obs.get('updated')}")
+            else:
+                st.info("Marine observation data is not available at this time.")
+                if marine_obs.get("error"):
+                    st.caption(f"Error: {marine_obs.get('error')}")
 
 # Add footer
 st.markdown("---")
