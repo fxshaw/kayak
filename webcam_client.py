@@ -16,10 +16,15 @@ def get_webcam_image(url):
         The image bytes if successful, None otherwise
     """
     try:
-        response = requests.get(url, timeout=5)
+        headers = {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36'
+        }
+        response = requests.get(url, headers=headers, timeout=10)
+        print(f"Response status for {url}: {response.status_code}")
         if response.status_code == 200:
             return response.content
         else:
+            print(f"Failed to get image from {url}, status code: {response.status_code}")
             return None
     except Exception as e:
         print(f"Error getting webcam image: {e}")
@@ -32,8 +37,8 @@ def get_seattle_ferry_webcam():
     Returns:
         The image bytes if successful, None otherwise
     """
-    # Seattle Ferry Terminal webcam (Coleman Dock)
-    url = "https://images.wsdot.wa.gov/ferries/sr520/SRCam.jpg"
+    # Seattle ferry terminal view - updated URL from WSDOT traffic cameras
+    url = "https://images.wsdot.wa.gov/nw/099vc16008.jpg"
     return get_webcam_image(url)
 
 def get_bainbridge_ferry_webcam():
@@ -43,19 +48,19 @@ def get_bainbridge_ferry_webcam():
     Returns:
         The image bytes if successful, None otherwise
     """
-    # This is WSDOT's Bainbridge Island Terminal camera
-    url = "https://images.wsdot.wa.gov/nw/010vc00082.jpg"
+    # Bainbridge Island ferry terminal camera
+    url = "https://images.wsdot.wa.gov/nw/305vc00969.jpg"
     return get_webcam_image(url)
 
-def get_eagle_harbor_webcam():
+def get_elliot_bay_webcam():
     """
-    Get a view of Eagle Harbor on Bainbridge Island
+    Get a view of Elliott Bay
     
     Returns:
         The image bytes if successful, None otherwise
     """
-    # Eagle Harbor Marina webcam
-    url = "https://images.wsdot.wa.gov/nw/010vc00516.jpg"
+    # Elliott Bay view
+    url = "https://cdn.tegna-media.com/king/weather/seattleskyline.jpg"
     return get_webcam_image(url)
 
 def get_bremerton_ferry_webcam():
@@ -66,18 +71,29 @@ def get_bremerton_ferry_webcam():
         The image bytes if successful, None otherwise
     """
     # Bremerton Terminal webcam
-    url = "https://images.wsdot.wa.gov/sw/006vc16001.jpg"
+    url = "https://images.wsdot.wa.gov/sw/304vc00000.jpg"
     return get_webcam_image(url)
 
-def get_rich_passage_webcam():
+def get_tacoma_narrows_webcam():
     """
-    Get a view of Rich Passage (between Bainbridge and Bremerton)
+    Get a view of the Tacoma Narrows Bridge
     
     Returns:
         The image bytes if successful, None otherwise
     """
-    # Rich Passage webcam
-    url = "https://images.wsdot.wa.gov/sw/006vc17219.jpg"
+    # Tacoma Narrows Bridge webcam (for water conditions in the South Sound)
+    url = "https://images.wsdot.wa.gov/sw/016vc00438.jpg"
+    return get_webcam_image(url)
+
+def get_puget_sound_web_cam():
+    """
+    Get a view of Puget Sound weather conditions (Space Needle cam)
+    
+    Returns:
+        The image bytes if successful, None otherwise
+    """
+    # Space Needle webcam showing Puget Sound weather
+    url = "https://spaceneedle.com/wp-content/uploads/2023/06/spaceneedle_west.jpg"
     return get_webcam_image(url)
 
 def get_point_white_area_webcams():
@@ -96,14 +112,14 @@ def get_point_white_area_webcams():
             "description": "View of the Bainbridge Island Ferry Terminal",
             "updated": current_time
         },
-        "Eagle Harbor": {
-            "image": get_eagle_harbor_webcam(), 
-            "description": "View of Eagle Harbor on Bainbridge Island",
+        "Seattle Waterfront": {
+            "image": get_seattle_ferry_webcam(),
+            "description": "View of the Seattle Waterfront near Ferry Terminal",
             "updated": current_time
         },
-        "Seattle Ferry Terminal": {
-            "image": get_seattle_ferry_webcam(),
-            "description": "View of the Seattle Ferry Terminal (Coleman Dock)",
+        "Elliott Bay": {
+            "image": get_elliot_bay_webcam(), 
+            "description": "View of Elliott Bay from Seattle",
             "updated": current_time
         },
         "Bremerton Ferry Terminal": {
@@ -111,9 +127,14 @@ def get_point_white_area_webcams():
             "description": "View of the Bremerton Ferry Terminal",
             "updated": current_time
         },
-        "Rich Passage": {
-            "image": get_rich_passage_webcam(),
-            "description": "View of Rich Passage (between Bainbridge and Bremerton)",
+        "Puget Sound Weather": {
+            "image": get_puget_sound_web_cam(),
+            "description": "View of Puget Sound weather conditions",
+            "updated": current_time
+        },
+        "Tacoma Narrows": {
+            "image": get_tacoma_narrows_webcam(),
+            "description": "View of Tacoma Narrows Bridge and water conditions",
             "updated": current_time
         }
     }
