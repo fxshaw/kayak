@@ -73,6 +73,11 @@ with st.sidebar:
             selected_date = max_date
         
         st.markdown(f"**Selected: {format_date(selected_date)}**")
+        
+        # Add refresh button
+        if st.button("Refresh Data for Selected Date", key="refresh_button"):
+            st.rerun()
+            
     except ValueError:
         # Handle invalid dates like Feb 31
         st.warning("Invalid date selection. Using today's date.")
@@ -383,6 +388,10 @@ if view_option == "Daily Forecast":
 
 else:  # Weekly Overview
     st.header("Weekly Kayak Launch Overview")
+    
+    # Add refresh button for weekly view
+    if st.button("Refresh Weekly Data", key="refresh_weekly_button"):
+        st.rerun()
     
     # Create tabs for different aspects
     tab1, tab2, tab3 = st.tabs(["Launch Quality", "Tide Overview", "Weather Trends"])
