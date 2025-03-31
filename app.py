@@ -287,20 +287,7 @@ if view_option == "Daily Forecast":
             else:
                 st.error("Hourly forecast data not available")
             
-            # Ferry Schedule Section
-            st.subheader("Ferry Schedule")
-            if ferry_data is not None and len(ferry_data) > 0:
-                ferry_df = pd.DataFrame(ferry_data)
-                # Display ferries in a more compact format
-                st.markdown("**Bainbridge Island - Seattle Ferries:**")
-                
-                # Group by direction and format nicely
-                for direction in ferry_df['direction'].unique():
-                    direction_ferries = ferry_df[ferry_df['direction'] == direction]
-                    times = ', '.join([t.strftime('%H:%M') for t in direction_ferries['departure_time']])
-                    st.markdown(f"**{direction}**: {times}")
-            else:
-                st.error("Ferry schedule data not available")
+# Ferry schedule section removed as per user request
                 
         except Exception as e:
             st.error(f"Error loading data: {str(e)}")
@@ -419,10 +406,10 @@ else:  # Weekly Overview
                         height=500
                     )
                     
-                    # Update y-axis to show hours in 12-hour format
+                    # Update y-axis to show hours in 24-hour format
                     fig.update_yaxes(
                         tickvals=list(range(0, 24)),
-                        ticktext=[f"{h % 12 if h % 12 else 12} {'AM' if h < 12 else 'PM'}" for h in range(0, 24)]
+                        ticktext=[f"{h:02d}:00" for h in range(0, 24)]
                     )
                     
                     st.plotly_chart(fig, use_container_width=True)
@@ -603,10 +590,10 @@ else:  # Weekly Overview
                         font=dict(color="red")
                     )
                     
-                    # Update x-axis to show hours in 12-hour format
+                    # Update x-axis to show hours in 24-hour format
                     fig.update_xaxes(
                         tickvals=list(range(0, 24)),
-                        ticktext=[f"{h % 12 if h % 12 else 12} {'AM' if h < 12 else 'PM'}" for h in range(0, 24)]
+                        ticktext=[f"{h:02d}:00" for h in range(0, 24)]
                     )
                     
                     # Improve appearance
