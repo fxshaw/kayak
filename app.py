@@ -354,7 +354,7 @@ if view_option == "Daily Forecast":
                     }
                     return color_map.get(val, '')
                 
-                styled_hourly = hourly_df.style.applymap(
+                styled_hourly = hourly_df.style.map(
                     color_rating, subset=['Rating']
                 )
                 
@@ -616,7 +616,7 @@ else:  # Weekly Overview
                                 return 'background-color: #ddffdd'
                             return ''
                         
-                        styled_extremes = display_df.style.applymap(
+                        styled_extremes = display_df.style.map(
                             highlight_tide, subset=['Tide Type']
                         )
                         
@@ -712,9 +712,9 @@ else:  # Weekly Overview
                                 return 'color: orange'
                             return ''
                         
-                        styled_wind = display_df.style.applymap(
+                        styled_wind = display_df.style.map(
                             color_wind_speed, subset=['Max Speed (mph)']
-                        ).applymap(
+                        ).map(
                             color_wind_speed, subset=['Avg Speed (mph)']
                         )
                         
