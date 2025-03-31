@@ -65,9 +65,19 @@ def get_launch_recommendations(tide_data, current_data, ferry_data, weather_data
             continue
         
         current_speed = current_hour_data['speed'].iloc[0]
+        # Get current direction text based on actual NOAA values
+        # For our station, when Velocity_Major is positive = flood, negative = ebb
         if 'direction' in current_hour_data:
             current_direction = current_hour_data['direction'].iloc[0]
-            current_direction_text = 'flooding' if 0 <= current_direction <= 180 else 'ebbing'
+            current_velocity_value = current_speed  # We've already converted to absolute in the data fetching
+            
+            # Interpret current direction based on the NOAA values
+            if current_direction < 120:  # Near 69 degrees = Flood direction
+                current_direction_text = 'flooding'
+            elif current_direction > 200:  # Near 240 degrees = Ebb direction
+                current_direction_text = 'ebbing'
+            else:
+                current_direction_text = 'mixed'
         else:
             current_direction_text = 'unknown'
         

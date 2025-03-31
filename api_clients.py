@@ -17,7 +17,7 @@ WSF_API_BASE_URL = "https://www.wsdot.wa.gov/ferries/api/schedule/rest"
 # Station IDs for Point White Drive NE area
 # These are example stations - real implementation would use the closest accurate stations
 TIDE_STATION_ID = "9447130"  # Seattle station
-CURRENT_STATION_ID = "PCT1641_17"  # Rich Passage current station
+CURRENT_STATION_ID = "PUG1636"  # Rich Passage current station
 
 # Coordinates for Point White Drive NE on Bainbridge Island
 POINT_WHITE_LAT = 47.5980
@@ -153,8 +153,19 @@ def get_current_data(date):
                         # Parse date and time
                         dt = datetime.strptime(pred["Time"], "%Y-%m-%d %H:%M")
                         times.append(dt)
-                        speeds.append(float(pred["Velocity_Major"]))
-                        directions.append(float(pred["Bin"]) if "Bin" in pred else 0)  # Direction might not be in all records
+                        # Velocity_Major can be negative (ebb) or positive (flood)
+                        # For the app, we need the absolute speed value
+                        speed = abs(float(pred["Velocity_Major"]))
+                        speeds.append(speed)
+                        
+                        # For direction, we'll use the meanFloodDir or meanEbbDir based on the Velocity
+                        if "Velocity_Major" in pred and float(pred["Velocity_Major"]) > 0:
+                            # Positive velocity = flood
+                            direction = float(pred["meanFloodDir"]) if "meanFloodDir" in pred else 0
+                        else:
+                            # Negative velocity = ebb
+                            direction = float(pred["meanEbbDir"]) if "meanEbbDir" in pred else 180
+                        directions.append(direction)
                     
                     # Create DataFrame
                     df = pd.DataFrame({
