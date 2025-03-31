@@ -6,6 +6,7 @@ import json
 import time
 import math
 from utils import get_wind_direction_text, knots_to_mph
+import pytz
 
 # API keys and base URLs
 # Note: These would typically be in environment variables
@@ -464,3 +465,61 @@ def generate_simulated_weather_data(date):
     })
     
     return df
+
+def get_sun_times(date):
+    """
+    Get sunrise and sunset times for a specific date at Point White
+    
+    Args:
+        date: The date to get sunrise/sunset times for
+        
+    Returns:
+        Dictionary with sunrise and sunset datetime objects
+    """
+    # For a real implementation, we'd use a proper astronomical calculation or API
+    # such as the US Naval Observatory or Sunrise-Sunset.org API
+    # This is a simplified implementation for demo purposes
+    
+    # Base sunrise/sunset times for Bainbridge Island by month
+    # These are approximate times in local time
+    # Format: (sunrise_hour, sunrise_minute, sunset_hour, sunset_minute)
+    sun_times_by_month = {
+        1: (7, 50, 16, 40),  # January
+        2: (7, 15, 17, 25),  # February
+        3: (6, 30, 18, 5),   # March
+        4: (5, 45, 18, 50),  # April
+        5: (5, 5, 19, 30),   # May
+        6: (4, 50, 20, 0),   # June
+        7: (5, 0, 20, 0),    # July
+        8: (5, 35, 19, 25),  # August
+        9: (6, 15, 18, 30),  # September
+        10: (6, 55, 17, 30), # October
+        11: (7, 35, 16, 40), # November
+        12: (8, 0, 16, 20)   # December
+    }
+    
+    # Get the times for the current month
+    month = date.month
+    sunrise_hour, sunrise_minute, sunset_hour, sunset_minute = sun_times_by_month[month]
+    
+    # Create the datetime objects
+    pacific_tz = pytz.timezone('America/Los_Angeles')
+    
+    sunrise = datetime.combine(date, datetime.min.time())
+    sunrise = sunrise.replace(hour=sunrise_hour, minute=sunrise_minute)
+    sunrise = pacific_tz.localize(sunrise)
+    
+    sunset = datetime.combine(date, datetime.min.time())
+    sunset = sunset.replace(hour=sunset_hour, minute=sunset_minute)
+    sunset = pacific_tz.localize(sunset)
+    
+    # Add 30 minutes before sunrise and after sunset as buffer
+    sunrise_buffer = sunrise - timedelta(minutes=30)
+    sunset_buffer = sunset + timedelta(minutes=30)
+    
+    return {
+        "sunrise": sunrise,
+        "sunrise_buffer": sunrise_buffer,
+        "sunset": sunset,
+        "sunset_buffer": sunset_buffer
+    }

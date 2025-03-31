@@ -10,7 +10,8 @@ from api_clients import (
     get_tide_data, 
     get_current_data, 
     get_ferry_schedule, 
-    get_weather_data
+    get_weather_data,
+    get_sun_times
 )
 from recommendation_engine import (
     get_launch_recommendations,
@@ -128,6 +129,18 @@ if view_option == "Daily Forecast":
             current_data = get_current_data(selected_date)
             ferry_data = get_ferry_schedule(selected_date)
             weather_data = get_weather_data(selected_date)
+            
+            # Get sunrise and sunset times
+            sun_times = get_sun_times(selected_date)
+            sunrise_time = format_time(sun_times['sunrise'])
+            sunset_time = format_time(sun_times['sunset'])
+            
+            # Display sunrise and sunset information
+            st.markdown(f"""
+            **Daylight Hours:**  
+            Sunrise: {sunrise_time} | Sunset: {sunset_time}  
+            *Recommendations only include daylight hours with a 30-minute buffer before sunrise and after sunset.*
+            """)
             
             # Get recommendations based on all conditions
             recommendations = get_launch_recommendations(
@@ -390,6 +403,9 @@ else:  # Weekly Overview
                 ferry_data = get_ferry_schedule(date)
                 weather_data = get_weather_data(date)
                 
+                # Get sunrise and sunset times for this date
+                sun_times = get_sun_times(date)
+                
                 # Store tide and current data for weekly overview
                 if tide_data is not None:
                     tide_data['date'] = date
@@ -427,6 +443,12 @@ else:  # Weekly Overview
             with tab1:
                 if not weekly_rec_df.empty:
                     st.subheader("Launch Quality by Day and Hour")
+                    
+                    # Note about daylight hours
+                    st.markdown("""
+                    **Note:** Recommendations only show optimal times during daylight hours 
+                    (30 minutes before sunrise to 30 minutes after sunset).
+                    """)
                     
                     # Prepare data for heatmap
                     # Convert date to string for display

@@ -11,6 +11,7 @@ from utils import (
     ferry_time_proximity,
     get_tide_status
 )
+from api_clients import get_sun_times
 
 # Define colors for ratings
 OPTIMAL_COLOR = "#2ecc71"  # Green
@@ -39,6 +40,10 @@ def get_launch_recommendations(tide_data, current_data, ferry_data, weather_data
     optimal_tide_range = get_optimal_tide_range()
     optimal_current_range = get_optimal_current_range()
     optimal_wind_range = get_optimal_wind_range()
+    
+    # Get sunrise/sunset times for the selected date
+    date = tide_data['time'].iloc[0].date()
+    sun_times = get_sun_times(date)
     
     # Initialize recommendations
     recommendations = []
@@ -176,9 +181,28 @@ def get_launch_recommendations(tide_data, current_data, ferry_data, weather_data
             'wind_direction': wind_direction,
             'ferry_status': ferry_status,
             'score': weighted_score,
-            'rating': rating
+            'rating': rating,
+            'is_daylight': False  # Default to False
         }
+        
+        # Check if this hour is during daylight hours (including 30 min buffer before sunrise and after sunset)
+        hour_datetime = datetime.combine(date, datetime.min.time()).replace(hour=hour)
+        if (sun_times['sunrise_buffer'].replace(tzinfo=None) <= hour_datetime < 
+            sun_times['sunset_buffer'].replace(tzinfo=None)):
+            recommendation['is_daylight'] = True
+            
+            # Keep the rating as is during daylight
+        else:
+            # Hours outside of daylight should never be optimal
+            if recommendation['rating'] == 'optimal':
+                recommendation['rating'] = 'acceptable'
         
         recommendations.append(recommendation)
     
-    return recommendations
+    # Filter recommendations to only include daylight hours
+    daylight_recommendations = [r for r in recommendations if r['is_daylight']]
+    
+    # Sort by score to ensure best times are listed first
+    daylight_recommendations.sort(key=lambda x: float(x['score']), reverse=True)
+    
+    return daylight_recommendations
