@@ -5,7 +5,7 @@ import os
 import json
 import time
 import math
-from utils import get_wind_direction_text
+from utils import get_wind_direction_text, knots_to_mph
 
 # API keys and base URLs
 # Note: These would typically be in environment variables
@@ -155,8 +155,10 @@ def get_current_data(date):
                         times.append(dt)
                         # Velocity_Major can be negative (ebb) or positive (flood)
                         # For the app, we need the absolute speed value
-                        speed = abs(float(pred["Velocity_Major"]))
-                        speeds.append(speed)
+                        # Convert from knots to mph
+                        speed_knots = abs(float(pred["Velocity_Major"]))
+                        speed_mph = knots_to_mph(speed_knots)
+                        speeds.append(speed_mph)
                         
                         # For direction, we'll use the meanFloodDir or meanEbbDir based on the Velocity
                         if "Velocity_Major" in pred and float(pred["Velocity_Major"]) > 0:
@@ -193,7 +195,8 @@ def get_current_data(date):
                         # Simulate tidal current pattern with two peaks per day
                         # This is a very simplified model
                         hour_frac = hour / 24.0 * 2 * math.pi  # Convert hour to radians
-                        speed = abs(1.5 * math.sin(hour_frac)) + 0.2  # Speed between 0.2 and 1.7 knots
+                        speed_knots = abs(1.5 * math.sin(hour_frac)) + 0.2  # Speed between 0.2 and 1.7 knots
+                        speed_mph = knots_to_mph(speed_knots)  # Convert to mph
                         
                         # Direction alternates with tide
                         if math.sin(hour_frac) > 0:
@@ -201,7 +204,7 @@ def get_current_data(date):
                         else:
                             direction = 270  # Flood tide (flowing west)
                         
-                        speeds.append(speed)
+                        speeds.append(speed_mph)
                         directions.append(direction)
                     
                     # Create DataFrame

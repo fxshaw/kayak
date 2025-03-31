@@ -2,9 +2,9 @@ import pandas as pd
 from datetime import datetime, timedelta
 
 def format_time(dt_obj):
-    """Format datetime object to time string (HH:MM AM/PM)"""
+    """Format datetime object to 24-hour military time string (HH:MM)"""
     if isinstance(dt_obj, datetime):
-        return dt_obj.strftime("%I:%M %p")
+        return dt_obj.strftime("%H:%M")
     return dt_obj
 
 def format_date(date_obj):
@@ -39,7 +39,7 @@ def is_high_tide(height):
 def is_strong_current(speed):
     """Determine if current is too strong for safe kayaking"""
     # Adjust thresholds based on local knowledge
-    return speed > 2.0
+    return speed > 2.3  # mph (2.0 knots converted to mph)
 
 def is_high_wind(speed):
     """Determine if wind is too strong for safe kayaking"""
@@ -54,6 +54,10 @@ def get_wind_direction_text(degrees):
     ]
     index = round(degrees / 22.5) % 16
     return directions[index]
+
+def knots_to_mph(knots):
+    """Convert speed from knots to miles per hour"""
+    return knots * 1.15078
 
 def get_tide_status(height, previous_height=None):
     """Determine if tide is rising, falling, or at extremes"""
@@ -78,7 +82,7 @@ def get_optimal_current_range():
     """Get the optimal current speed range for kayaking at Point White"""
     # These are example values and should be adjusted based on local conditions
     min_speed = 0.0  # Minimal current is generally better for beginners
-    max_speed = 1.5  # Not too strong to paddle against
+    max_speed = 1.73  # Not too strong to paddle against (1.5 knots converted to mph)
     return (min_speed, max_speed)
 
 def get_optimal_wind_range():

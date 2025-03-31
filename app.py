@@ -116,7 +116,7 @@ if view_option == "Daily Forecast":
                             st.markdown(f"""
                             <div style="padding: 10px; border-radius: 5px; background-color: rgba(46, 204, 113, 0.1); margin-bottom: 10px;">
                                 <h4 style="margin:0; color: {OPTIMAL_COLOR};">🚣 {window['start_time']} - {window['end_time']}</h4>
-                                <p style="margin:0;">Tide: {window['tide_height']}ft | Current: {window['current_speed']} knots<br>
+                                <p style="margin:0;">Tide: {window['tide_height']}ft | Current: {window['current_speed']} mph<br>
                                 Wind: {window['wind_speed']} mph {window['wind_direction']} | Ferry: {window['ferry_status']}</p>
                             </div>
                             """, unsafe_allow_html=True)
@@ -128,7 +128,7 @@ if view_option == "Daily Forecast":
                                 st.markdown(f"""
                                 <div style="padding: 10px; border-radius: 5px; background-color: rgba(241, 196, 15, 0.1); margin-bottom: 10px;">
                                     <h4 style="margin:0; color: {ACCEPTABLE_COLOR};">🚣 {window['start_time']} - {window['end_time']}</h4>
-                                    <p style="margin:0;">Tide: {window['tide_height']}ft | Current: {window['current_speed']} knots<br>
+                                    <p style="margin:0;">Tide: {window['tide_height']}ft | Current: {window['current_speed']} mph<br>
                                     Wind: {window['wind_speed']} mph {window['wind_direction']} | Ferry: {window['ferry_status']}</p>
                                 </div>
                                 """, unsafe_allow_html=True)
@@ -160,7 +160,7 @@ if view_option == "Daily Forecast":
                         <h4 style="margin:0; color: {rating_color};">Current Status: {current_conditions['rating'].title()}</h4>
                         <p style="margin:0;">
                             <strong>Tide:</strong> {current_conditions['tide_height']}ft ({current_conditions['tide_status']})<br>
-                            <strong>Current:</strong> {current_conditions['current_speed']} knots ({current_conditions['current_direction']})<br>
+                            <strong>Current:</strong> {current_conditions['current_speed']} mph ({current_conditions['current_direction']})<br>
                             <strong>Wind:</strong> {current_conditions['wind_speed']} mph from {current_conditions['wind_direction']}<br>
                             <strong>Next Ferry:</strong> {current_conditions['ferry_status']}
                         </p>
@@ -218,12 +218,12 @@ if view_option == "Daily Forecast":
                         current_data, 
                         x='time', 
                         y='speed', 
-                        title="Current Speed (knots)",
-                        labels={"time": "Time", "speed": "Speed (knots)"}
+                        title="Current Speed (mph)",
+                        labels={"time": "Time", "speed": "Speed (mph)"}
                     )
                     
                     # Add danger zone for strong currents
-                    strong_current_threshold = 2.0  # knots
+                    strong_current_threshold = 2.3  # mph (2.0 knots converted to mph)
                     fig.add_shape(
                         type="rect",
                         x0=current_data['time'].min(),
@@ -262,7 +262,7 @@ if view_option == "Daily Forecast":
                         'Hour': f"{start_hour:02d}:00 - {start_hour+1:02d}:00",
                         'Rating': r['rating'].title(),
                         'Tide': f"{r['tide_height']}ft ({r['tide_status']})",
-                        'Current': f"{r['current_speed']} knots ({r['current_direction']})",
+                        'Current': f"{r['current_speed']} mph ({r['current_direction']})",
                         'Wind': f"{r['wind_speed']} mph ({r['wind_direction']})",
                         'Ferry': r['ferry_status']
                     })
@@ -297,7 +297,7 @@ if view_option == "Daily Forecast":
                 # Group by direction and format nicely
                 for direction in ferry_df['direction'].unique():
                     direction_ferries = ferry_df[ferry_df['direction'] == direction]
-                    times = ', '.join([t.strftime('%I:%M %p') for t in direction_ferries['departure_time']])
+                    times = ', '.join([t.strftime('%H:%M') for t in direction_ferries['departure_time']])
                     st.markdown(f"**{direction}**: {times}")
             else:
                 st.error("Ferry schedule data not available")
@@ -464,7 +464,7 @@ else:  # Weekly Overview
                     # Convert datetime to string for readability
                     weekly_tide_df['date_str'] = weekly_tide_df['date'].apply(lambda d: format_date(d))
                     weekly_tide_df['time_str'] = weekly_tide_df['time'].apply(
-                        lambda t: t.strftime('%I:%M %p')
+                        lambda t: t.strftime('%H:%M')
                     )
                     
                     # Create line chart for each day
@@ -539,7 +539,7 @@ else:  # Weekly Overview
                     extremes_df = pd.DataFrame(tide_extremes)
                     if not extremes_df.empty:
                         extremes_df['date_str'] = extremes_df['date'].apply(lambda d: format_date(d))
-                        extremes_df['time_str'] = extremes_df['time'].apply(lambda t: t.strftime('%I:%M %p'))
+                        extremes_df['time_str'] = extremes_df['time'].apply(lambda t: t.strftime('%H:%M'))
                         extremes_df = extremes_df.sort_values(['date', 'time'])
                         
                         # Display as a table
