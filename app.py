@@ -19,6 +19,7 @@ from recommendation_engine import (
     ACCEPTABLE_COLOR,
     NOT_RECOMMENDED_COLOR
 )
+from webcam_client import get_point_white_area_webcams
 
 # Configure page
 st.set_page_config(
@@ -385,6 +386,20 @@ if view_option == "Daily Forecast":
         except Exception as e:
             st.error(f"Error loading data: {str(e)}")
             st.info("Please try refreshing the page or selecting a different date.")
+            
+        # Add webcam section
+        st.header("📷 Live Webcam Views")
+        with st.spinner("Loading webcam images..."):
+            webcams = get_point_white_area_webcams()
+            if webcams:
+                st.markdown("View current conditions at locations around Bainbridge Island and Puget Sound")
+                tabs = st.tabs(list(webcams.keys()))
+                for i, (name, data) in enumerate(webcams.items()):
+                    with tabs[i]:
+                        st.image(data["image"], caption=f"{data['description']} (Updated: {data['updated']})")
+                        st.markdown(f"*{data['description']}*")
+            else:
+                st.info("Webcam images are not available at this time. Please try again later.")
 
 else:  # Weekly Overview
     st.header("Weekly Kayak Launch Overview")
@@ -758,6 +773,20 @@ else:  # Weekly Overview
         except Exception as e:
             st.error(f"Error loading weekly data: {str(e)}")
             st.info("Please try refreshing the page or selecting a different date range.")
+    
+    # Add webcam section to weekly view
+    st.header("📷 Live Webcam Views")
+    with st.spinner("Loading webcam images..."):
+        webcams = get_point_white_area_webcams()
+        if webcams:
+            st.markdown("View current conditions at locations around Bainbridge Island and Puget Sound")
+            tabs = st.tabs(list(webcams.keys()))
+            for i, (name, data) in enumerate(webcams.items()):
+                with tabs[i]:
+                    st.image(data["image"], caption=f"{data['description']} (Updated: {data['updated']})")
+                    st.markdown(f"*{data['description']}*")
+        else:
+            st.info("Webcam images are not available at this time. Please try again later.")
 
 # Add footer
 st.markdown("---")
